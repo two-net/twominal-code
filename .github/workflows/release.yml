@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Create a draft release'
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as a pre-release'
+        type: boolean
+        default: false
+
+# Ensure the workflow has permission to create releases and upload release assets
+permissions:
+  contents: write
+
+jobs:
+  publish-tauri:
+    name: Build & Release (${{ matrix.platform }}${{ matrix.args != '' && format(' - {0}', matrix.args) || '' }})
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Apple Silicon macOS (M1/M2/M3/M4)
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+          # Intel macOS
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+          # Linux x86_64 (.deb & .AppImage)
+          - platform: 'ubuntu-22.04'
+            args: ''
+          # Windows x86_64 (.msi & .exe)
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf xdg-utils
+          sudo apt-get install -y libappindicator3-dev || sudo apt-get install -y libayatana-appindicator3-dev
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Rust dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+
+      - name: Build Tauri app and create GitHub Release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'Twominal Code v__VERSION__'
+          releaseBody: 'See the release assets below to download and install this version.'
+          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+          generateReleaseNotes: true
+          args: ${{ matrix.args }}

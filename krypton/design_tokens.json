@@ -1,0 +1,18 @@
+{
+  "theme": "twominal-solar",
+  "version": "2.4.0",
+  "colors": {
+    "background": "#0c0e14",
+    "surface": "#12151f",
+    "panel": "#181b28",
+    "border": "#232738",
+    "text": "#e2e8f0",
+    "muted": "#717b99",
+    "accent": "#38bdf8",
+    "claude": "#d97706",
+    "antigravity": "#0284c7",
+    "codex": "#10b981",
+    "grok": "#ec4899",
+    "krypton": "#8b5cf6"
+  }
+}

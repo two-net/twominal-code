@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twominal Code — Next-Gen AI Code Editor</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts for Coding Ligatures & UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
+            display: ['"Space Grotesk"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            },
+            twominal: {
+              bg: '#0c0e14',
+              surface: '#12151f',
+              panel: '#181b28',
+              border: '#232738',
+              text: '#e2e8f0',
+              muted: '#717b99',
+              accent: '#38bdf8',
+              claude: '#d97706',
+              antigravity: '#0284c7',
+              codex: '#10b981',
+              grok: '#ec4899',
+              krypton: '#8b5cf6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Coding Font Ligatures */
+    .ligatures-enabled {
+      font-variant-ligatures: normal;
+      font-feature-settings: "liga" 1, "calt" 1, "dlig" 1;
+    }
+    .ligatures-disabled {
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.4);
+    }
+
+    /* Vim Cursor Animations */
+    @keyframes blink-cursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .vim-block-cursor {
+      animation: blink-cursor 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Splash Screen Glow */
+    .retro-glow {
+      text-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Diff styling */
+    .diff-add {
+      background: rgba(16, 185, 129, 0.15);
+      border-left: 3px solid #10b981;
+    }
+    .diff-del {
+      background: rgba(239, 68, 68, 0.15);
+      border-left: 3px solid #ef4444;
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans h-screen w-screen overflow-hidden select-none flex flex-col ligatures-enabled" id="app-body">
+
+  <!-- ========================================================================= -->
+  <!-- 1. SPLASH SCREEN (Retro-Futuristic Boot Sequence)                          -->
+  <!-- ========================================================================= -->
+  <div id="splash-screen" class="fixed inset-0 z-50 bg-[#08090d] flex flex-col items-center justify-center transition-all duration-700">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950/80 to-[#08090d] pointer-events-none"></div>
+    
+    <!-- Geometric Background Grid -->
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+
+    <div class="relative z-10 max-w-xl w-full px-6 flex flex-col items-center text-center">
+      <!-- Animated Logo -->
+      <div class="relative mb-6">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-purple-500 p-0.5 shadow-2xl shadow-indigo-500/30 animate-pulse">
+          <div class="w-full h-full bg-[#0d1017] rounded-2xl flex items-center justify-center">
+            <span class="font-display font-bold text-3xl bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">⧉</span>
+          </div>
+        </div>
+        <span class="absolute -bottom-2 -right-2 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/40 text-[10px] font-mono text-indigo-300 rounded-full font-bold uppercase tracking-wider">v2.4</span>
+      </div>
+
+      <h1 class="font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-2 retro-glow">
+        TWOMINAL <span class="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">CODE</span>
+      </h1>
+      <p class="text-sm font-mono text-slate-400 mb-8 max-w-md">
+        VS Code Extensibility + Native Speed + Krypton Spec Engine
+      </p>
+
+      <!-- Boot Diagnostics Terminal -->
+      <div class="w-full bg-[#0d1017]/90 border border-slate-800 rounded-xl p-4 font-mono text-xs text-left mb-6 shadow-2xl backdrop-blur-md">
+        <div class="flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-800/80 text-slate-500">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-500/60"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-amber-500/60"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/60"></div>
+          <span class="ml-2 text-[10px] uppercase tracking-widest text-slate-400">Core Subsystem Boot</span>
+        </div>
+        <div class="space-y-1.5 text-slate-300">
+          <p class="flex items-center justify-between text-emerald-400">
+            <span>[OK] Native Rendering Pipeline & Ligatures Engine</span>
+            <span class="text-[10px] text-slate-500">0.4ms</span>
+          </p>
+          <p class="flex items-center justify-between text-sky-400">
+            <span>[OK] Open-VSX Extension Host Compatibility Layer</span>
+            <span class="text-[10px] text-slate-500">1.2ms</span>
+          </p>
+          <p class="flex items-center justify-between text-purple-400">
+            <span>[OK] Krypton Spec & Design-First Skill Subsystem</span>
+            <span class="text-[10px] text-slate-500">0.8ms</span>
+          </p>
+          <p class="flex items-center justify-between text-amber-400">
+            <span>[OK] ACP Bridge (Claude, Antigravity, Codex, Grok)</span>
+            <span class="text-[10px] text-slate-500">Ready</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-3 w-full">
+        <button onclick="launchEditor()" class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 font-medium text-sm text-white shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 group">
+          <i data-lucide="play" class="w-4 h-4 fill-current group-hover:translate-x-0.5 transition-transform"></i>
+          <span>Launch Workspace</span>
+        </button>
+        <button onclick="openTechStackModal()" class="px-5 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-sm font-medium text-slate-200 transition-all flex items-center gap-2">
+          <i data-lucide="cpu" class="w-4 h-4 text-sky-400"></i>
+          <span>Tech Stack Setup</span>
+        </button>
+      </div>
+      
+      <p class="text-[11px] font-mono text-slate-500 mt-6 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+        Press <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">Space</kbd> or click launch to start
+      </p>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN APPLICATION SHELL                                                -->
+  <!-- ========================================================================= -->
+  
+  <!-- Window Header / Titlebar -->
+  <header class="h-10 bg-[#0d1017] border-b border-[#1f2433] flex items-center justify-between px-3 text-xs text-slate-300 select-none z-30">
+    <!-- Window Controls (macOS style by default) -->
+    <div class="flex items-center gap-2 min-w-[160px]">
+      <div class="flex items-center gap-1.5 mr-2" id="window-dots">
+        <button class="w-3 h-3 rounded-full bg-[#ff5f56] hover:opacity-80 transition-opacity" title="Close"></button>
+        <button class="w-3 h-3 rounded-full bg-[#ffbd2e] hover:opacity-80 transition-opacity" title="Minimize"></button>
+        <button class="w-3 h-3 rounded-full bg-[#27c93f] hover:opacity-80 transition-opacity" title="Maximize"></button>
+      </div>
+      <span class="font-display font-bold text-sm tracking-wide bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-1.5">
+        <span>⧉</span> Twominal
+      </span>
+      <span class="px-1.5 py-0.2 bg-indigo-950/60 border border-indigo-500/30 text-[10px] text-indigo-300 rounded font-mono">v2.4</span>
+    </div>
+
+    <!-- Center Command Search / Palette trigger -->
+    <button onclick="toggleCommandPalette()" class="flex items-center gap-2 px-4 py-1 rounded-md bg-[#161a26] border border-[#262c3e] hover:border-indigo-500/50 text-slate-400 hover:text-slate-200 text-xs transition-all w-80 max-w-sm justify-between shadow-inner">
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="search" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <span>twominal-core <span class="text-slate-600">/</span> <span id="title-filename" class="text-slate-300">acp_bridge.rs</span></span>
+      </div>
+      <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-[#0d1017] border border-slate-700 rounded text-slate-400">⌘P / Ctrl+P</kbd>
+    </button>
+
+    <!-- Top Right Controls (Theme Solar, ACP Engine Selector, Keybinding status) -->
+    <div class="flex items-center gap-2">
+      <!-- Solar Sunset/Sunrise Dynamic Toggle -->
+      <button onclick="cycleSolarMode()" id="solar-mode-btn" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#161a26] border border-[#262c3e] hover:bg-slate-800 text-[11px] font-mono text-amber-300 transition-all" title="Solar Theming Mode">
+        <i data-lucide="sun-medium" class="w-3.5 h-3.5 text-amber-400" id="solar-icon"></i>
+        <span id="solar-label">Sunset Sync (Night)</span>
+      </button>
+
+      <!-- Ligatures Toggle -->
+      <button onclick="toggleLigatures()" id="ligature-btn" class="flex items-center gap-1 px-2 py-1 rounded-md bg-[#161a26] border border-[#262c3e] text-[11px] font-mono text-sky-400 hover:bg-slate-800" title="Toggle Font Ligatures (=> !== === ->)">
+        <span class="font-bold">!=&gt;</span>
+        <span class="text-[10px] text-slate-400">LIGA</span>
+      </button>
+
+      <!-- Tech Stack Modal -->
+      <button onclick="openTechStackModal()" class="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-all" title="Architecture & Tech Stack">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Settings -->
+      <button onclick="openSettingsModal()" class="p-1.5 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-all" title="Settings">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Container: Activity Bar + Sidebar + Main Editor + AI Pane -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Activity Bar (Leftmost dock) -->
+    <aside class="w-12 bg-[#0a0c12] border-r border-[#1f2433] flex flex-col items-center py-2 justify-between z-20">
+      <div class="flex flex-col items-center gap-2">
+        <button onclick="switchSidebarTab('explorer')" id="tab-btn-explorer" class="p-2.5 rounded-lg text-indigo-400 bg-indigo-950/40 border border-indigo-500/30 transition-all relative group" title="File Explorer">
+          <i data-lucide="files" class="w-4 h-4"></i>
+          <span class="absolute left-14 bg-slate-900 border border-slate-700 text-white text-[11px] px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">Explorer (Cmd+Shift+E)</span>
+        </button>
+        <button onclick="switchSidebarTab('krypton')" id="tab-btn-krypton" class="p-2.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-purple-950/30 transition-all relative group" title="Krypton Spec Studio">
+          <i data-lucide="compass" class="w-4 h-4"></i>
+          <span class="absolute left-14 bg-slate-900 border border-slate-700 text-white text-[11px] px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">Krypton Spec Engine</span>
+        </button>
+        <button onclick="switchSidebarTab('extensions')" id="tab-btn-extensions" class="p-2.5 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-sky-950/30 transition-all relative group" title="Open-VSX Extensions">
+          <i data-lucide="blocks" class="w-4 h-4"></i>
+          <span class="absolute left-14 bg-slate-900 border border-slate-700 text-white text-[11px] px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">Extensions (Open-VSX)</span>
+        </button>
+        <button onclick="switchSidebarTab('git')" id="tab-btn-git" class="p-2.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/30 transition-all relative group" title="Source Control & Diffs">
+          <i data-lucide="git-branch" class="w-4 h-4"></i>
+          <span class="absolute left-14 bg-slate-900 border border-slate-700 text-white text-[11px] px-2 py-0.5 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">Source Control (2 changes)</span>
+        </button>
+      </div>
+
+      <div class="flex flex-col items-center gap-2">
+        <button onclick="toggleVimMode()" id="vim-status-toggle" class="px-1.5 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold" title="Vim Mode Active">
+          VIM
+        </button>
+        <button onclick="toggleAiPanel()" id="ai-panel-toggle-btn" class="p-2.5 rounded-lg text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900/50 transition-all" title="Toggle ACP AI Co-pilot">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Primary Sidebar (Collapsible: Explorer / Krypton / Extensions) -->
+    <aside id="sidebar" class="w-64 bg-[#0d1017] border-r border-[#1f2433] flex flex-col text-xs transition-all duration-200">
+      
+      <!-- Panel Header -->
+      <div class="h-9 px-3 border-b border-[#1f2433] flex items-center justify-between text-slate-400 font-semibold tracking-wider uppercase text-[11px]">
+        <span id="sidebar-title">Explorer: twominal</span>
+        <div class="flex items-center gap-1">
+          <button onclick="refreshSidebar()" class="p-1 hover:text-slate-200" title="Refresh"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+          <button onclick="toggleSidebar()" class="p-1 hover:text-slate-200" title="Collapse Sidebar"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+        </div>
+      </div>
+
+      <!-- Tab View 1: Explorer View -->
+      <div id="view-explorer" class="flex-1 overflow-y-auto p-2 space-y-1 font-mono text-xs">
+        <div class="text-slate-500 text-[10px] font-bold px-2 py-1 tracking-wider uppercase flex items-center gap-1">
+          <i data-lucide="folder-open" class="w-3 h-3 text-indigo-400"></i>
+          WORKSPACE (RUST + GPUI)
+        </div>
+        
+        <!-- Krypton Spec Folder -->
+        <div class="pl-2">
+          <div class="flex items-center gap-1.5 py-1 px-2 text-purple-300 hover:bg-purple-950/30 rounded cursor-pointer group">
+            <i data-lucide="folder" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>krypton/</span>
+            <span class="ml-auto text-[9px] px-1 bg-purple-950 text-purple-400 rounded">SPEC</span>
+          </div>
+          <div class="pl-4 space-y-0.5 mt-0.5">
+            <button onclick="openFile('krypton/SPEC_SOLAR_THEME.md')" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-purple-300 hover:bg-[#161a26] rounded text-left">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>SPEC_SOLAR_THEME.md</span>
+            </button>
+            <button onclick="openFile('krypton/design_tokens.json')" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-purple-300 hover:bg-[#161a26] rounded text-left">
+              <i data-lucide="file-json" class="w-3.5 h-3.5 text-yellow-400"></i>
+              <span>design_tokens.json</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- src/ Folder -->
+        <div class="pl-2">
+          <div class="flex items-center gap-1.5 py-1 px-2 text-slate-300 hover:bg-slate-800/40 rounded cursor-pointer">
+            <i data-lucide="folder" class="w-3.5 h-3.5 text-sky-400"></i>
+            <span>src/</span>
+          </div>
+          <div class="pl-4 space-y-0.5 mt-0.5">
+            <button onclick="openFile('src/acp_bridge.rs')" id="tree-acp_bridge.rs" class="w-full flex items-center gap-1.5 py-1 px-2 bg-indigo-950/40 text-indigo-300 rounded text-left border-l-2 border-indigo-500">
+              <i data-lucide="code-2" class="w-3.5 h-3.5 text-orange-400"></i>
+              <span>acp_bridge.rs</span>
+              <span class="ml-auto text-[10px] text-amber-400">●</span>
+            </button>
+            <button onclick="openFile('src/solar_engine.rs')" id="tree-solar_engine.rs" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded text-left">
+              <i data-lucide="code-2" class="w-3.5 h-3.5 text-orange-400"></i>
+              <span>solar_engine.rs</span>
+            </button>
+            <button onclick="openFile('src/vim_core.rs')" id="tree-vim_core.rs" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded text-left">
+              <i data-lucide="code-2" class="w-3.5 h-3.5 text-orange-400"></i>
+              <span>vim_core.rs</span>
+            </button>
+            <button onclick="openFile('src/main.rs')" id="tree-main.rs" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded text-left">
+              <i data-lucide="file-code" class="w-3.5 h-3.5 text-orange-400"></i>
+              <span>main.rs</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Config Files -->
+        <div class="pl-2 space-y-0.5">
+          <button onclick="openFile('Cargo.toml')" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded text-left">
+            <i data-lucide="settings-2" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Cargo.toml</span>
+          </button>
+          <button onclick="openFile('.twominal/extensions.json')" class="w-full flex items-center gap-1.5 py-1 px-2 text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded text-left">
+            <i data-lucide="file-json" class="w-3.5 h-3.5 text-yellow-400"></i>
+            <span>.twominal/extensions.json</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab View 2: Krypton Spec Studio -->
+      <div id="view-krypton" class="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs hidden">
+        <div class="p-2.5 rounded-lg bg-purple-950/30 border border-purple-500/30 text-purple-200 space-y-1">
+          <div class="flex items-center gap-1.5 font-bold text-purple-300">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Krypton Design-First Skill</span>
+          </div>
+          <p class="text-[11px] text-purple-300/80">Enforces architectural blueprint & test spec generation prior to agent code execution.</p>
+        </div>
+
+        <div class="space-y-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Specifications</span>
+          <div class="p-2.5 rounded-lg bg-[#161a26] border border-slate-800 space-y-1.5 hover:border-purple-500/40 cursor-pointer" onclick="openFile('krypton/SPEC_SOLAR_THEME.md')">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200">SPEC-004: Solar Theme</span>
+              <span class="text-[9px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded font-mono">APPROVED</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Automated sunset/sunrise color morphing using local geoloc coordinates & system clock.</p>
+          </div>
+
+          <div class="p-2.5 rounded-lg bg-[#161a26] border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200">SPEC-005: ACP Stdio Multi-Tenant</span>
+              <span class="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded font-mono">IN REVIEW</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Simultaneous sub-agent spawning across Claude, Antigravity, and Codex worktrees.</p>
+          </div>
+        </div>
+
+        <button onclick="triggerKryptonNewSpec()" class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-md font-medium text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-purple-900/30">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+          <span>Create New Spec</span>
+        </button>
+      </div>
+
+      <!-- Tab View 3: Open-VSX Extensions Store -->
+      <div id="view-extensions" class="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs hidden">
+        <div class="relative">
+          <input type="text" placeholder="Search Open-VSX Marketplace..." class="w-full bg-[#161a26] border border-slate-800 rounded-md px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 font-mono">
+        </div>
+
+        <div class="space-y-2">
+          <!-- Extension 1 -->
+          <div class="p-2.5 rounded-lg bg-[#161a26] border border-slate-800 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-semibold text-slate-200">Rust Analyzer (GPUI Bridge)</div>
+                <div class="text-[10px] text-slate-400">rust-lang.rust-analyzer</div>
+              </div>
+              <span class="text-[9px] px-1.5 py-0.5 bg-sky-500/20 text-sky-400 rounded font-mono">INSTALLED</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Full LSP semantic completion and high-speed inlay hints.</p>
+          </div>
+
+          <!-- Extension 2 -->
+          <div class="p-2.5 rounded-lg bg-[#161a26] border border-slate-800 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-semibold text-slate-200">Retro-Futurism Synthwave Theme</div>
+                <div class="text-[10px] text-slate-400">krypton.retro-synth</div>
+              </div>
+              <button onclick="installThemeExtension(this)" class="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-medium rounded">Apply</button>
+            </div>
+            <p class="text-[11px] text-slate-400">Krypton UI neon accents & cyber glow for Twominal Code.</p>
+          </div>
+
+          <!-- Extension 3 -->
+          <div class="p-2.5 rounded-lg bg-[#161a26] border border-slate-800 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-semibold text-slate-200">GitHub Copilot & ACP Proxy</div>
+                <div class="text-[10px] text-slate-400">agentclientprotocol.proxy</div>
+              </div>
+              <span class="text-[9px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded font-mono">ACTIVE</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Bridge Open-VSX language engines to ACP agent streams.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab View 4: Source Control / Diffs -->
+      <div id="view-git" class="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs hidden">
+        <div class="flex items-center justify-between text-slate-400">
+          <span class="font-bold text-[10px] uppercase tracking-wider">Staged & ACP Changes</span>
+          <span class="text-[10px] font-mono text-emerald-400">2 files modified</span>
+        </div>
+        <div class="space-y-1 font-mono text-xs">
+          <div onclick="openDiffViewer()" class="p-2 bg-[#161a26] hover:bg-slate-800 rounded border border-slate-800 flex items-center justify-between cursor-pointer group">
+            <span class="text-amber-400 flex items-center gap-1.5">
+              <i data-lucide="file-diff" class="w-3.5 h-3.5"></i>
+              <span>acp_bridge.rs</span>
+            </span>
+            <span class="text-[10px] text-emerald-400 font-bold">+18 -4</span>
+          </div>
+          <div class="p-2 bg-[#161a26] hover:bg-slate-800 rounded border border-slate-800 flex items-center justify-between cursor-pointer">
+            <span class="text-sky-400 flex items-center gap-1.5">
+              <i data-lucide="file-diff" class="w-3.5 h-3.5"></i>
+              <span>solar_engine.rs</span>
+            </span>
+            <span class="text-[10px] text-emerald-400 font-bold">+42 -0</span>
+          </div>
+        </div>
+        <button onclick="commitChanges()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-xs flex items-center justify-center gap-1">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Approve ACP Agent Commit</span>
+        </button>
+      </div>
+
+      <!-- Sidebar Footer: Session Info -->
+      <div class="p-2.5 bg-[#090b10] border-t border-[#1f2433] text-[10px] font-mono text-slate-500 flex items-center justify-between">
+        <span>PID: 49204 (GPUI)</span>
+        <span class="text-emerald-400">● 144 FPS</span>
+      </div>
+    </aside>
+
+    <!-- Center Main Editor Viewport -->
+    <main class="flex-1 flex flex-col bg-[#0f121a] overflow-hidden">
+      
+      <!-- Editor Tabs Bar -->
+      <div class="h-9 bg-[#0b0d13] border-b border-[#1f2433] flex items-center justify-between px-2 overflow-x-auto text-xs font-mono">
+        <div class="flex items-center gap-1" id="editor-tabs-container">
+          <!-- Active Tab -->
+          <div id="tab-active" class="flex items-center gap-2 px-3 py-1.5 bg-[#0f121a] text-slate-100 border-t-2 border-indigo-500 border-r border-[#1f2433] rounded-t cursor-pointer">
+            <i data-lucide="code-2" class="w-3.5 h-3.5 text-orange-400"></i>
+            <span id="active-tab-title">acp_bridge.rs</span>
+            <span class="text-[10px] text-amber-400">●</span>
+            <button onclick="closeCurrentTab(event)" class="p-0.5 hover:text-red-400 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button>
+          </div>
+          <!-- Second Tab -->
+          <div onclick="openFile('krypton/SPEC_SOLAR_THEME.md')" class="flex items-center gap-2 px-3 py-1.5 bg-transparent text-slate-400 hover:text-slate-200 hover:bg-[#161a26] rounded-t cursor-pointer border-r border-transparent">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>SPEC_SOLAR_THEME.md</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-400 text-xs">
+          <!-- Split editor -->
+          <button onclick="splitEditor()" class="p-1 hover:text-white" title="Split Editor (Cmd+\)"><i data-lucide="columns" class="w-3.5 h-3.5"></i></button>
+          <!-- Diff Toggle -->
+          <button onclick="toggleDiffOverlay()" class="p-1 hover:text-emerald-400" title="Toggle Agent Diff"><i data-lucide="git-compare" class="w-3.5 h-3.5"></i></button>
+        </div>
+      </div>
+
+      <!-- Editor Code Canvas + Line Numbers Gutter -->
+      <div class="flex-1 flex overflow-hidden relative font-mono text-sm leading-relaxed" id="editor-viewport">
+        
+        <!-- Line Numbers Gutter -->
+        <div id="editor-gutter" class="w-12 bg-[#0c0e15] border-r border-[#1a1e2d] py-3 text-right pr-3 select-none text-slate-600 font-mono text-xs space-y-1">
+          <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+          <div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+          <div>21</div><div>22</div><div>23</div><div>24</div><div>25</div><div>26</div><div>27</div><div>28</div><div>29</div><div>30</div>
+        </div>
+
+        <!-- Code Content Area -->
+        <div class="flex-1 p-3 overflow-y-auto relative bg-[#0f121a] focus:outline-none" tabindex="0" id="code-canvas" onkeydown="handleVimKey(event)">
+          
+          <!-- Syntax Highlighted Code Container -->
+          <pre class="font-mono text-xs sm:text-sm text-slate-200 whitespace-pre" id="code-content"><span class="text-purple-400 font-bold">use</span> <span class="text-sky-300">std::sync::Arc</span>;
+<span class="text-purple-400 font-bold">use</span> <span class="text-sky-300">tokio::sync::mpsc</span>;
+<span class="text-purple-400 font-bold">use</span> <span class="text-sky-300">agent_client_protocol</span>::{<span class="text-yellow-300">AcpSession</span>, <span class="text-yellow-300">JsonRpcTransport</span>, <span class="text-yellow-300">AgentTurn</span>};
+
+<span class="text-slate-500">/// Twominal Code - High Speed Multi-Provider ACP Bridge Engine</span>
+<span class="text-slate-500">/// Supports Claude Code, Google Antigravity, OpenAI Codex, & xAI Grok.</span>
+<span class="text-purple-400 font-bold">pub struct</span> <span class="text-yellow-300 font-bold">AcpBridgeEngine</span> {
+    <span class="text-sky-300">active_provider</span>: <span class="text-yellow-300">ProviderKind</span>,
+    <span class="text-sky-300">stdio_tx</span>: <span class="text-yellow-300">mpsc::Sender</span>&lt;<span class="text-yellow-300">AgentTurn</span>&gt;,
+    <span class="text-sky-300">krypton_spec_guard</span>: <span class="text-yellow-300">Arc</span>&lt;<span class="text-yellow-300">KryptonSpecTracker</span>&gt;,
+}
+
+<span class="text-purple-400 font-bold">impl</span> <span class="text-yellow-300">AcpBridgeEngine</span> {
+    <span class="text-purple-400 font-bold">pub async fn</span> <span class="text-blue-400 font-bold">connect_agent</span>(provider: <span class="text-yellow-300">ProviderKind</span>) -&gt; <span class="text-yellow-300">Result</span>&lt;<span class="text-purple-400">Self</span>, <span class="text-yellow-300">AcpError</span>&gt; {
+        <span class="text-slate-500">// Test Font Ligatures: !=&gt; === !== &lt;= &gt;= -&gt; &lt;- &amp;&amp; || <!-- comment --></span>
+        <span class="text-purple-400 font-bold">let</span> transport = <span class="text-purple-400 font-bold">match</span> provider {
+            <span class="text-yellow-300">ProviderKind::Claude</span> =&gt; <span class="text-yellow-300">JsonRpcTransport::spawn_stdio</span>(<span class="text-emerald-300">"npx @agentclientprotocol/claude-agent-acp"</span>)?,
+            <span class="text-yellow-300">ProviderKind::Antigravity</span> =&gt; <span class="text-yellow-300">JsonRpcTransport::spawn_stdio</span>(<span class="text-emerald-300">"agy --acp-mode"</span>)?,
+            <span class="text-yellow-300">ProviderKind::Codex</span> =&gt; <span class="text-yellow-300">JsonRpcTransport::spawn_stdio</span>(<span class="text-emerald-300">"codex-acp --server"</span>)?,
+            <span class="text-yellow-300">ProviderKind::Grok</span> =&gt; <span class="text-yellow-300">JsonRpcTransport::spawn_stdio</span>(<span class="text-emerald-300">"grok agent stdio"</span>)?,
+        };
+
+        <span class="text-slate-500">// Verify Krypton spec validation step before applying edits</span>
+        <span class="text-purple-400 font-bold">if</span> provider.requires_krypton_spec() {
+            <span class="text-yellow-300">tracing::info!</span>(<span class="text-emerald-300">"Enforcing design-first spec workflow."</span>);
+        }
+
+        <span class="text-yellow-300">Ok</span>(<span class="text-purple-400">Self</span> {
+            active_provider: provider,
+            stdio_tx: transport.channel(),
+            krypton_spec_guard: <span class="text-yellow-300">Arc::new</span>(<span class="text-yellow-300">KryptonSpecTracker::init</span>()),
+        })
+    }
+}</pre>
+
+          <!-- Interactive Vim Cursor simulation -->
+          <div id="vim-cursor" class="absolute left-[360px] top-[198px] w-2 h-4 bg-amber-400/80 vim-block-cursor pointer-events-none"></div>
+
+          <!-- Inline Diff Preview (Collapsible) -->
+          <div id="inline-diff-card" class="mt-4 p-3 bg-[#131722] border border-emerald-500/40 rounded-lg text-xs font-mono hidden">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+              <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>ACP Proposed Diff (Claude 3.7 Sonnet)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="acceptDiff()" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold">Accept (⌘Enter)</button>
+                <button onclick="rejectDiff()" class="px-2 py-1 bg-rose-900/60 hover:bg-rose-800 text-rose-200 rounded text-[10px]">Reject</button>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="diff-del px-2 py-0.5 text-rose-300">- let transport = JsonRpcTransport::spawn_stdio("claude")?;</div>
+              <div class="diff-add px-2 py-0.5 text-emerald-300">+ let transport = JsonRpcTransport::spawn_stdio_with_backoff(provider, &amp;opts).await?;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vim Command Prompt Bar (When typing ':w', ':q', etc.) -->
+      <div id="vim-command-bar" class="h-7 bg-[#0a0c12] border-t border-[#1f2433] px-3 flex items-center justify-between text-xs font-mono text-amber-300">
+        <div class="flex items-center w-full">
+          <input type="text" id="vim-input" placeholder="Type Vim command (e.g. :w, :theme, :acp claude, :help)..." class="bg-transparent text-slate-200 focus:outline-none w-full text-xs font-mono placeholder:text-slate-600" onkeydown="executeVimCommand(event)">
+        </div>
+        <span class="text-[10px] text-slate-500 whitespace-nowrap">Press 'i' to Insert, 'Esc' for Normal</span>
+      </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- 3. AI AGENT COPILOT & ACP WORKSPACE PANE (Right Dock)                     -->
+    <!-- ========================================================================= -->
+    <aside id="ai-panel" class="w-96 bg-[#0c0e15] border-l border-[#1f2433] flex flex-col z-20 transition-all duration-300">
+      
+      <!-- ACP Provider Selector & Status -->
+      <div class="p-3 border-b border-[#1f2433] bg-[#0f121a]">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5 font-display font-semibold text-xs text-white">
+            <i data-lucide="bot" class="w-4 h-4 text-indigo-400"></i>
+            <span>ACP Agent Hub</span>
+          </div>
+          <!-- Provider Engine Badge -->
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[10px] font-mono text-slate-400" id="acp-connection-status">stdio : connected</span>
+          </div>
+        </div>
+
+        <!-- 4 AI Providers Switcher Tabs -->
+        <div class="grid grid-cols-4 gap-1 p-1 bg-[#090b10] rounded-lg border border-slate-800 text-[11px] font-mono">
+          <button onclick="switchAcpProvider('claude')" id="btn-provider-claude" class="py-1 text-center rounded font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all">Claude</button>
+          <button onclick="switchAcpProvider('antigravity')" id="btn-provider-antigravity" class="py-1 text-center rounded text-slate-400 hover:text-sky-300 transition-all">Antigrav</button>
+          <button onclick="switchAcpProvider('codex')" id="btn-provider-codex" class="py-1 text-center rounded text-slate-400 hover:text-emerald-300 transition-all">Codex</button>
+          <button onclick="switchAcpProvider('grok')" id="btn-provider-grok" class="py-1 text-center rounded text-slate-400 hover:text-pink-300 transition-all">Grok</button>
+        </div>
+
+        <!-- Krypton Spec Toggle -->
+        <div class="mt-2.5 flex items-center justify-between text-[11px] px-2 py-1.5 rounded-md bg-purple-950/20 border border-purple-500/30">
+          <div class="flex items-center gap-1.5 text-purple-300">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span class="font-medium">Krypton Design-First Mode</span>
+          </div>
+          <input type="checkbox" id="krypton-spec-toggle" checked class="accent-purple-500 cursor-pointer">
+        </div>
+      </div>
+
+      <!-- Live Agent Transcript / Stream -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs" id="agent-transcript">
+        
+        <!-- Welcome Message -->
+        <div class="p-3 rounded-lg bg-[#141722] border border-slate-800 text-slate-300 space-y-1.5">
+          <div class="flex items-center justify-between text-indigo-400 font-semibold text-[11px]">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              Claude Code via ACP Bridge
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">claude-3-7-sonnet</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            I'm connected via the standard JSON-RPC Agent Client Protocol. I can architect specs, generate diffs, run cargo tests, and refactor code.
+          </p>
+        </div>
+
+        <!-- Simulated Thinking Step -->
+        <div id="agent-thinking-box" class="p-2.5 rounded-lg bg-indigo-950/20 border border-indigo-500/20 text-indigo-300 space-y-1 text-xs font-mono">
+          <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            <i data-lucide="brain-circuit" class="w-3.5 h-3.5 animate-spin"></i>
+            <span>ACP Thinking Block (3.2s)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Analyzing Rust traits for solar sunset sync engine. Inspecting system geolocation fallback and dynamic palette morphing.
+          </p>
+        </div>
+
+        <!-- Tool Call execution card -->
+        <div class="p-2.5 rounded-lg bg-[#121520] border border-slate-800 text-xs font-mono space-y-1">
+          <div class="flex items-center justify-between text-slate-400 text-[10px]">
+            <span class="text-amber-400 flex items-center gap-1">
+              <i data-lucide="terminal" class="w-3 h-3"></i>
+              <span>tool_call: fs.patch_file</span>
+            </span>
+            <span class="text-emerald-400">Approved</span>
+          </div>
+          <p class="text-slate-300 text-[11px]">Target: <code class="text-sky-300">src/acp_bridge.rs</code> (+18 lines)</p>
+        </div>
+      </div>
+
+      <!-- Agent Prompt Input Area -->
+      <div class="p-3 bg-[#0d1017] border-t border-[#1f2433] space-y-2">
+        <!-- Quick Slash Command pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto text-[10px] font-mono text-slate-400 pb-1">
+          <button onclick="insertPrompt('/spec Create solar themer')" class="px-2 py-0.5 rounded bg-[#161a26] border border-slate-800 hover:border-purple-500 text-purple-300">/spec</button>
+          <button onclick="insertPrompt('/review Diff changes')" class="px-2 py-0.5 rounded bg-[#161a26] border border-slate-800 hover:border-sky-500 text-sky-300">/review</button>
+          <button onclick="insertPrompt('/test Run cargo test')" class="px-2 py-0.5 rounded bg-[#161a26] border border-slate-800 hover:border-emerald-500 text-emerald-300">/test</button>
+        </div>
+
+        <div class="relative">
+          <textarea id="agent-input" rows="3" placeholder="Ask Claude, Antigravity, Codex, or Grok..." class="w-full bg-[#141722] border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 font-sans resize-none"></textarea>
+          <button onclick="sendAgentPrompt()" class="absolute bottom-2.5 right-2.5 p-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. BOTTOM STATUS BAR                                                     -->
+  <!-- ========================================================================= -->
+  <footer class="h-6 bg-[#090b10] border-t border-[#1a1e2b] flex items-center justify-between px-3 text-[11px] font-mono text-slate-400 select-none z-30">
+    <div class="flex items-center gap-3">
+      <!-- Vim mode status -->
+      <span class="flex items-center gap-1 font-bold text-amber-400" id="status-vim-badge">
+        <i data-lucide="terminal-square" class="w-3.5 h-3.5"></i>
+        <span>NORMAL</span>
+      </span>
+      <span class="text-slate-700">|</span>
+      
+      <!-- Git branch -->
+      <span class="flex items-center gap-1 hover:text-slate-200 cursor-pointer">
+        <i data-lucide="git-branch" class="w-3 h-3 text-indigo-400"></i>
+        <span>main* [2+]</span>
+      </span>
+      <span class="text-slate-700">|</span>
+
+      <!-- Active ACP Provider -->
+      <span class="flex items-center gap-1 text-slate-300" id="status-acp-provider">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+        <span>Claude ACP (stdio)</span>
+      </span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Sunset to Sunrise Dynamic Time indicator -->
+      <span class="flex items-center gap-1 text-amber-300" id="status-solar-time" title="Synced to Local Sunset/Sunrise">
+        <i data-lucide="moon" class="w-3 h-3"></i>
+        <span>11:11 PM (Solar Night)</span>
+      </span>
+      <span class="text-slate-700">|</span>
+
+      <!-- Ligatures State -->
+      <span class="text-sky-400 cursor-pointer" onclick="toggleLigatures()">Ligatures: ON</span>
+      <span class="text-slate-700">|</span>
+
+      <!-- Cursor Position -->
+      <span>Ln 14, Col 28</span>
+      <span class="text-slate-700">|</span>
+      <span>UTF-8</span>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- 5. MODALS & OVERLAYS                                                     -->
+  <!-- ========================================================================= -->
+
+  <!-- Tech Stack Architecture Modal (Interview / Choice) -->
+  <div id="modal-tech-stack" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0f121a] border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl text-slate-200 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-indigo-400">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-white">Twominal Architecture & Tech Stack</h3>
+            <p class="text-xs text-slate-400">Select the target native compilation runtime and UI framework</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-tech-stack')" class="p-1 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <!-- Stack 1: Rust + GPUI (Zed Style) -->
+        <div class="p-4 rounded-xl bg-[#141722] border-2 border-indigo-500 cursor-pointer space-y-2 hover:bg-slate-800/60 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-sm">Rust + GPUI</span>
+            <span class="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[10px] rounded font-bold">RECOMMENDED</span>
+          </div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Direct GPU rendering (120+ FPS), near-zero RAM footprint, async tokio ACP agent subprocesses.</p>
+          <div class="text-[10px] font-mono text-emerald-400">● Zed-like speed</div>
+        </div>
+
+        <!-- Stack 2: Rust + Tauri v2 + Web Engine -->
+        <div class="p-4 rounded-xl bg-[#141722] border border-slate-800 cursor-pointer space-y-2 hover:border-sky-500 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-sm">Tauri v2 + Rust</span>
+            <span class="px-1.5 py-0.5 bg-sky-500/20 text-sky-300 text-[10px] rounded">FLEXIBLE</span>
+          </div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Web-based UI rendering paired with native Rust backend and Open-VSX extension runtime.</p>
+          <div class="text-[10px] font-mono text-sky-400">● Fast UI customization</div>
+        </div>
+
+        <!-- Stack 3: Electron + Node Extension Host -->
+        <div class="p-4 rounded-xl bg-[#141722] border border-slate-800 cursor-pointer space-y-2 hover:border-amber-500 transition-all">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-sm">Electron + Node</span>
+            <span class="px-1.5 py-0.5 bg-slate-800 text-slate-300 text-[10px] rounded">100% VS CODE</span>
+          </div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Direct compatibility with 100% of VS Code marketplace extensions and Monaco core.</p>
+          <div class="text-[10px] font-mono text-amber-400">● Maximal plugin compatibility</div>
+        </div>
+      </div>
+
+      <!-- Action -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button onclick="closeModal('modal-tech-stack')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">Save Architecture Config</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings & Solar Theme Dialog -->
+  <div id="modal-settings" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0f121a] border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl text-slate-200 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-display font-bold text-lg text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-indigo-400"></i>
+          <span>Twominal Settings</span>
+        </h3>
+        <button onclick="closeModal('modal-settings')" class="p-1 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- Solar Theme Setting -->
+        <div class="p-3 rounded-lg bg-[#141722] border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-200">Dynamic Solar Theming</span>
+            <span class="text-[10px] font-mono text-amber-400">Sunset → Sunrise</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Automatically transitions from clean morning daylight to deep dark night theme based on solar position.</p>
+          <div class="flex items-center gap-2 pt-1">
+            <button onclick="setThemeDirect('dark')" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-xs">Always Dark</button>
+            <button onclick="setThemeDirect('light')" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-center text-xs">Always Light</button>
+            <button onclick="setThemeDirect('solar')" class="flex-1 py-1.5 bg-indigo-600 text-white rounded text-center text-xs font-bold">Solar Sync</button>
+          </div>
+        </div>
+
+        <!-- Font Ligatures Setting -->
+        <div class="p-3 rounded-lg bg-[#141722] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="font-semibold text-slate-200">Coding Font Ligatures</div>
+            <div class="text-[11px] text-slate-400">Render !=&gt;, ===, !==, -&gt; as joined typographic glyphs</div>
+          </div>
+          <input type="checkbox" id="ligatures-checkbox" checked onchange="toggleLigatures()" class="accent-sky-500 w-4 h-4 cursor-pointer">
+        </div>
+
+        <!-- Vim Keybinding Mode -->
+        <div class="p-3 rounded-lg bg-[#141722] border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="font-semibold text-slate-200">Vim Modal Editing Engine</div>
+            <div class="text-[11px] text-slate-400">Enable Normal, Insert, Visual, and Command (:) modes</div>
+          </div>
+          <input type="checkbox" id="vim-checkbox" checked onchange="toggleVimMode()" class="accent-amber-500 w-4 h-4 cursor-pointer">
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeModal('modal-settings')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Command Palette Modal (Ctrl+P / Cmd+P) -->
+  <div id="modal-command-palette" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24 p-4 hidden" onclick="handlePaletteBackdrop(event)">
+    <div class="bg-[#0f121a] border border-slate-700/80 rounded-xl max-w-xl w-full shadow-2xl text-slate-200 overflow-hidden font-mono text-xs">
+      <div class="p-3 border-b border-slate-800 flex items-center gap-2 bg-[#141722]">
+        <i data-lucide="search" class="w-4 h-4 text-indigo-400"></i>
+        <input type="text" id="palette-input" placeholder="Type a file name or command (> for actions)..." class="w-full bg-transparent focus:outline-none text-slate-100 placeholder:text-slate-500 text-xs">
+      </div>
+      <div class="p-2 max-h-64 overflow-y-auto space-y-1">
+        <div onclick="openFile('src/acp_bridge.rs')" class="p-2 hover:bg-indigo-950/40 rounded flex items-center justify-between cursor-pointer text-slate-300">
+          <span class="flex items-center gap-2"><i data-lucide="code" class="w-3.5 h-3.5 text-orange-400"></i> src/acp_bridge.rs</span>
+          <span class="text-[10px] text-slate-500">File</span>
+        </div>
+        <div onclick="openFile('krypton/SPEC_SOLAR_THEME.md')" class="p-2 hover:bg-indigo-950/40 rounded flex items-center justify-between cursor-pointer text-slate-300">
+          <span class="flex items-center gap-2"><i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i> krypton/SPEC_SOLAR_THEME.md</span>
+          <span class="text-[10px] text-purple-400">Krypton Spec</span>
+        </div>
+        <div onclick="switchAcpProvider('antigravity')" class="p-2 hover:bg-indigo-950/40 rounded flex items-center justify-between cursor-pointer text-slate-300">
+          <span class="flex items-center gap-2"><i data-lucide="bot" class="w-3.5 h-3.5 text-sky-400"></i> Switch ACP: Google Antigravity</span>
+          <span class="text-[10px] text-sky-400">Action</span>
+        </div>
+        <div onclick="cycleSolarMode()" class="p-2 hover:bg-indigo-950/40 rounded flex items-center justify-between cursor-pointer text-slate-300">
+          <span class="flex items-center gap-2"><i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i> Toggle Solar Theme</span>
+          <span class="text-[10px] text-amber-400">Action</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 6. JAVASCRIPT APPLICATION LOGIC                                          -->
+  <!-- ========================================================================= -->
+  <script>
+    // State Store
+    const state = {
+      activeFile: 'src/acp_bridge.rs',
+      vimMode: 'NORMAL', // NORMAL, INSERT, VISUAL
+      vimEnabled: true,
+      ligatures: true,
+      solarMode: 'solar', // 'solar' (sunset/sunrise), 'dark', 'light'
+      activeProvider: 'claude', // 'claude', 'antigravity', 'codex', 'grok'
+      kryptonDesignFirst: true,
+      sidebarTab: 'explorer',
+      aiPanelOpen: true,
+      cursorPosition: { line: 14, col: 28 },
+    };
+
+    // Virtual File Contents
+    const fileContents = {
+      'src/acp_bridge.rs': `use std::sync::Arc;
+use tokio::sync::mpsc;
+use agent_client_protocol::{AcpSession, JsonRpcTransport, AgentTurn};
+
+/// Twominal Code - High Speed Multi-Provider ACP Bridge Engine
+/// Supports Claude Code, Google Antigravity, OpenAI Codex, & xAI Grok.
+pub struct AcpBridgeEngine {
+    active_provider: ProviderKind,
+    stdio_tx: mpsc::Sender<AgentTurn>,
+    krypton_spec_guard: Arc<KryptonSpecTracker>,
+}
+
+impl AcpBridgeEngine {
+    pub async fn connect_agent(provider: ProviderKind) -> Result<Self, AcpError> {
+        // Test Font Ligatures: !=> === !== <= >= -> <- && || <!-- comment -->
+        let transport = match provider {
+            ProviderKind::Claude => JsonRpcTransport::spawn_stdio("npx @agentclientprotocol/claude-agent-acp")?,
+            ProviderKind::Antigravity => JsonRpcTransport::spawn_stdio("agy --acp-mode")?,
+            ProviderKind::Codex => JsonRpcTransport::spawn_stdio("codex-acp --server")?,
+            ProviderKind::Grok => JsonRpcTransport::spawn_stdio("grok agent stdio")?,
+        };
+
+        // Verify Krypton spec validation step before applying edits
+        if provider.requires_krypton_spec() {
+            tracing::info!("Enforcing design-first spec workflow.");
+        }
+
+        Ok(Self {
+            active_provider: provider,
+            stdio_tx: transport.channel(),
+            krypton_spec_guard: Arc::new(KryptonSpecTracker::init()),
+        })
+    }
+}`,
+      'krypton/SPEC_SOLAR_THEME.md': `# Krypton Specification: Dynamic Solar Theming (SPEC-004)
+
+## Objective
+Implement zero-latency solar color morphing between sunset and sunrise in Twominal Code.
+
+## Architecture
+- **Provider:** Integrated into Twominal UI Shell & GPUI palette shaders.
+- **Trigger:** System geocoding / local clock interpolation.
+- **States:**
+  1. *Morning Glow:* (06:00 - 08:30) Warm amber light accents.
+  2. *Solar Noon:* (08:30 - 17:30) Ultra-crisp high contrast light theme.
+  3. *Golden Sunset:* (17:30 - 19:30) Low-blue spectrum dusk palette.
+  4. *Deep Midnight:* (19:30 - 06:00) Obsidian zinc & neon luminescence.
+
+## Acceptance Criteria
+- [x] Zero frame-drop during smooth palette morphing.
+- [x] Full font ligature preservation during shader swaps.
+- [x] ACP agent state persists uninterrupted across theme switches.`,
+      
+      'src/solar_engine.rs': `pub struct SolarEngine {
+    pub current_hour: u32,
+    pub is_night: bool,
+}
+
+impl SolarEngine {
+    pub fn compute_ambient_palette() -> &'static str {
+        // Automatic sunset to sunrise calculation
+        "SolarPalette::DeepMidnight"
+    }
+}`,
+
+      'src/vim_core.rs': `// Vim modal engine for Twominal
+pub enum VimMode {
+    Normal,
+    Insert,
+    Visual,
+    Command,
+}`,
+      'src/main.rs': `fn main() {
+    println!("Twominal Code initialized at 144 FPS");
+}`,
+      'Cargo.toml': `[package]
+name = "twominal-code"
+version = "2.4.0"
+edition = "2024"
+
+[dependencies]
+gpui = { git = "https://github.com/zed-industries/zed" }
+tokio = { version = "1.0", features = ["full"] }
+agent-client-protocol = "0.4"`,
+      '.twominal/extensions.json': `{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "krypton.retro-synth",
+    "agentclientprotocol.proxy"
+  ]
+}`
+    };
+
+    // Initialize UI on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initKeyboardShortcuts();
+      updateSolarClock();
+      setInterval(updateSolarClock, 30000);
+    });
+
+    // Dismiss Splash Screen
+    function launchEditor() {
+      const splash = document.getElementById('splash-screen');
+      splash.style.opacity = '0';
+      splash.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        splash.style.display = 'none';
+      }, 600);
+    }
+
+    // Keyboard trigger on splash screen
+    window.addEventListener('keydown', (e) => {
+      const splash = document.getElementById('splash-screen');
+      if (splash && splash.style.display !== 'none' && (e.code === 'Space' || e.key === 'Enter')) {
+        launchEditor();
+      }
+    });
+
+    // File Open Handler
+    function openFile(filepath) {
+      state.activeFile = filepath;
+      const content = fileContents[filepath] || `// Empty file: ${filepath}`;
+      
+      // Update code view
+      const codeCanvas = document.getElementById('code-content');
+      codeCanvas.textContent = content;
+
+      // Update titles
+      document.getElementById('active-tab-title').textContent = filepath.split('/').pop();
+      document.getElementById('title-filename').textContent = filepath;
+
+      // Close palette if open
+      closeModal('modal-command-palette');
+    }
+
+    // Tab Navigation in Sidebar
+    function switchSidebarTab(tab) {
+      state.sidebarTab = tab;
+      
+      // Hide all views
+      ['explorer', 'krypton', 'extensions', 'git'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (view) view.classList.add('hidden');
+        if (btn) {
+          btn.classList.remove('bg-indigo-950/40', 'border-indigo-500/30', 'text-indigo-400', 'text-purple-400', 'text-sky-400', 'text-emerald-400');
+          btn.classList.add('text-slate-400');
+        }
+      });
+
+      // Show active view
+      const activeView = document.getElementById(`view-${tab}`);
+      const activeBtn = document.getElementById(`tab-btn-${tab}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('bg-indigo-950/40', 'border', 'border-indigo-500/30', 'text-indigo-400');
+      }
+
+      // Title
+      const titles = {
+        explorer: 'Explorer: twominal',
+        krypton: 'Krypton Spec Studio',
+        extensions: 'Open-VSX Extensions',
+        git: 'Source Control & Diffs'
+      };
+      document.getElementById('sidebar-title').textContent = titles[tab] || 'Explorer';
+    }
+
+    // Toggle Sidebar collapse
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('w-64');
+      sidebar.classList.toggle('w-0');
+      sidebar.classList.toggle('overflow-hidden');
+    }
+
+    // Toggle ACP AI Copilot Panel
+    function toggleAiPanel() {
+      const panel = document.getElementById('ai-panel');
+      panel.classList.toggle('w-96');
+      panel.classList.toggle('w-0');
+      panel.classList.toggle('overflow-hidden');
+    }
+
+    // Font Ligatures Toggle
+    function toggleLigatures() {
+      state.ligatures = !state.ligatures;
+      const body = document.getElementById('app-body');
+      const btn = document.getElementById('ligature-btn');
+      const chk = document.getElementById('ligatures-checkbox');
+
+      if (state.ligatures) {
+        body.classList.remove('ligatures-disabled');
+        body.classList.add('ligatures-enabled');
+        btn.classList.add('text-sky-400');
+        btn.classList.remove('text-slate-500');
+        if (chk) chk.checked = true;
+      } else {
+        body.classList.remove('ligatures-enabled');
+        body.classList.add('ligatures-disabled');
+        btn.classList.add('text-slate-500');
+        btn.classList.remove('text-sky-400');
+        if (chk) chk.checked = false;
+      }
+    }
+
+    // Solar Theming Sunset-to-Sunrise cycle
+    function cycleSolarMode() {
+      const modes = ['solar', 'dark', 'light'];
+      const nextIndex = (modes.indexOf(state.solarMode) + 1) % modes.length;
+      setThemeDirect(modes[nextIndex]);
+    }
+
+    function setThemeDirect(mode) {
+      state.solarMode = mode;
+      const label = document.getElementById('solar-label');
+      const icon = document.getElementById('solar-icon');
+      const html = document.documentElement;
+
+      if (mode === 'solar') {
+        label.textContent = 'Sunset Sync (Auto)';
+        icon.setAttribute('data-lucide', 'sun-medium');
+        html.classList.add('dark');
+      } else if (mode === 'dark') {
+        label.textContent = 'Always Dark';
+        icon.setAttribute('data-lucide', 'moon');
+        html.classList.add('dark');
+      } else {
+        label.textContent = 'Always Light';
+        icon.setAttribute('data-lucide', 'sun');
+        html.classList.remove('dark');
+      }
+      lucide.createIcons();
+    }
+
+    function updateSolarClock() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const isNight = hours >= 18 || hours < 6;
+      const statusSolar = document.getElementById('status-solar-time');
+      if (statusSolar) {
+        statusSolar.innerHTML = `<i data-lucide="${isNight ? 'moon' : 'sun'}" class="w-3 h-3"></i> <span>${hours}:${minutes < 10 ? '0' : ''}${minutes} (${isNight ? 'Solar Night' : 'Solar Day'})</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // Switch between the 4 ACP Providers
+    function switchAcpProvider(provider) {
+      state.activeProvider = provider;
+      
+      const buttons = {
+        claude: document.getElementById('btn-provider-claude'),
+        antigravity: document.getElementById('btn-provider-antigravity'),
+        codex: document.getElementById('btn-provider-codex'),
+        grok: document.getElementById('btn-provider-grok'),
+      };
+
+      // Reset button styles
+      Object.entries(buttons).forEach(([key, btn]) => {
+        if (!btn) return;
+        btn.className = 'py-1 text-center rounded text-slate-400 hover:text-slate-200 transition-all';
+      });
+
+      // Highlight active provider with custom branding
+      const activeBtn = buttons[provider];
+      const statusBadge = document.getElementById('status-acp-provider');
+      
+      if (provider === 'claude') {
+        activeBtn.className = 'py-1 text-center rounded font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>Claude ACP (stdio)</span>`;
+      } else if (provider === 'antigravity') {
+        activeBtn.className = 'py-1 text-center rounded font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30';
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span><span>Antigravity agy (stdio)</span>`;
+      } else if (provider === 'codex') {
+        activeBtn.className = 'py-1 text-center rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Codex ACP AppServer</span>`;
+      } else if (provider === 'grok') {
+        activeBtn.className = 'py-1 text-center rounded font-semibold bg-pink-500/20 text-pink-300 border border-pink-500/30';
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span><span>Grok ACP stdio</span>`;
+      }
+
+      // Add notification in chat transcript
+      const transcript = document.getElementById('agent-transcript');
+      const note = document.createElement('div');
+      note.className = 'p-2 rounded bg-[#10141f] border border-slate-800 text-[11px] font-mono text-slate-400 flex items-center justify-between';
+      note.innerHTML = `<span>Switched ACP harness to <strong>${provider.toUpperCase()}</strong></span> <span class="text-emerald-400 text-[9px]">READY</span>`;
+      transcript.appendChild(note);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    // Send AI Agent Prompt
+    function sendAgentPrompt() {
+      const input = document.getElementById('agent-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const transcript = document.getElementById('agent-transcript');
+
+      // User Message
+      const userBubble = document.createElement('div');
+      userBubble.className = 'p-2.5 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-slate-200 text-xs';
+      userBubble.innerHTML = `<div class="font-bold text-[10px] text-indigo-400 mb-1">USER</div><p>${text}</p>`;
+      transcript.appendChild(userBubble);
+
+      input.value = '';
+
+      // Simulated ACP Thinking & Response Stream
+      setTimeout(() => {
+        const thinking = document.createElement('div');
+        thinking.className = 'p-2.5 rounded-lg bg-indigo-950/20 border border-indigo-500/20 text-indigo-300 text-xs font-mono';
+        thinking.innerHTML = `
+          <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+            <i data-lucide="brain-circuit" class="w-3.5 h-3.5 animate-spin"></i>
+            <span>${state.activeProvider.toUpperCase()} Thinking...</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Generating Krypton spec contract & calculating JSON-RPC diff turn...</p>
+        `;
+        transcript.appendChild(thinking);
+        lucide.createIcons();
+        transcript.scrollTop = transcript.scrollHeight;
+
+        // Show diff card in editor
+        setTimeout(() => {
+          document.getElementById('inline-diff-card').classList.remove('hidden');
+        }, 800);
+      }, 400);
+    }
+
+    function insertPrompt(text) {
+      document.getElementById('agent-input').value = text;
+      document.getElementById('agent-input').focus();
+    }
+
+    // Diff handlers
+    function openDiffViewer() {
+      document.getElementById('inline-diff-card').classList.remove('hidden');
+    }
+    function toggleDiffOverlay() {
+      document.getElementById('inline-diff-card').classList.toggle('hidden');
+    }
+    function acceptDiff() {
+      document.getElementById('inline-diff-card').classList.add('hidden');
+      alertNotification("ACP Diff Applied & Formatted via Rustfmt");
+    }
+    function rejectDiff() {
+      document.getElementById('inline-diff-card').classList.add('hidden');
+      alertNotification("ACP Diff Rejected");
+    }
+
+    // Vim Mode Key Event Handling
+    function handleVimKey(e) {
+      if (!state.vimEnabled) return;
+
+      const cursor = document.getElementById('vim-cursor');
+      const modeIndicator = document.getElementById('vim-mode-indicator');
+      const statusBadge = document.getElementById('status-vim-badge');
+
+      if (state.vimMode === 'NORMAL') {
+        if (e.key === 'i') {
+          e.preventDefault();
+          state.vimMode = 'INSERT';
+          cursor.classList.remove('w-2', 'bg-amber-400/80');
+          cursor.classList.add('w-0.5', 'bg-sky-400');
+          modeIndicator.textContent = '-- INSERT --';
+          modeIndicator.className = 'font-bold text-sky-400';
+          statusBadge.innerHTML = `<i data-lucide="edit-3" class="w-3.5 h-3.5"></i><span>INSERT</span>`;
+          statusBadge.className = 'flex items-center gap-1 font-bold text-sky-400';
+        } else if (e.key === ':') {
+          e.preventDefault();
+          const vimInput = document.getElementById('vim-input');
+          vimInput.focus();
+          vimInput.value = ':';
+        } else if (e.key === 'v') {
+          e.preventDefault();
+          state.vimMode = 'VISUAL';
+          modeIndicator.textContent = '-- VISUAL --';
+          modeIndicator.className = 'font-bold text-purple-400';
+          statusBadge.innerHTML = `<i data-lucide="selection" class="w-3.5 h-3.5"></i><span>VISUAL</span>`;
+          statusBadge.className = 'flex items-center gap-1 font-bold text-purple-400';
+        }
+      } else if (state.vimMode === 'INSERT' || state.vimMode === 'VISUAL') {
+        if (e.key === 'Escape') {
+          state.vimMode = 'NORMAL';
+          cursor.classList.add('w-2', 'bg-amber-400/80');
+          cursor.classList.remove('w-0.5', 'bg-sky-400');
+          modeIndicator.textContent = '-- NORMAL --';
+          modeIndicator.className = 'font-bold text-amber-400';
+          statusBadge.innerHTML = `<i data-lucide="terminal-square" class="w-3.5 h-3.5"></i><span>NORMAL</span>`;
+          statusBadge.className = 'flex items-center gap-1 font-bold text-amber-400';
+        }
+      }
+      lucide.createIcons();
+    }
+
+    function toggleVimMode() {
+      state.vimEnabled = !state.vimEnabled;
+      const toggle = document.getElementById('vim-status-toggle');
+      const chk = document.getElementById('vim-checkbox');
+      if (state.vimEnabled) {
+        toggle.className = 'px-1.5 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold';
+        if (chk) chk.checked = true;
+      } else {
+        toggle.className = 'px-1.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-500 font-mono text-[10px]';
+        if (chk) chk.checked = false;
+      }
+    }
+
+    function executeVimCommand(e) {
+      if (e.key === 'Enter') {
+        const cmd = e.target.value.trim();
+        e.target.value = '';
+        e.target.blur();
+        document.getElementById('code-canvas').focus();
+
+        if (cmd === ':w') {
+          alertNotification("File saved successfully.");
+        } else if (cmd === ':q') {
+          alertNotification("Buffer closed.");
+        } else if (cmd.startsWith(':theme')) {
+          cycleSolarMode();
+        } else if (cmd.startsWith(':acp')) {
+          const p = cmd.split(' ')[1] || 'claude';
+          switchAcpProvider(p);
+        } else {
+          alertNotification(`Executed command: ${cmd}`);
+        }
+      } else if (e.key === 'Escape') {
+        e.target.value = '';
+        e.target.blur();
+        document.getElementById('code-canvas').focus();
+      }
+    }
+
+    // Modal Helpers
+    function openTechStackModal() {
+      document.getElementById('modal-tech-stack').classList.remove('hidden');
+    }
+    function openSettingsModal() {
+      document.getElementById('modal-settings').classList.remove('hidden');
+    }
+    function toggleCommandPalette() {
+      const palette = document.getElementById('modal-command-palette');
+      palette.classList.toggle('hidden');
+      if (!palette.classList.contains('hidden')) {
+        document.getElementById('palette-input').focus();
+      }
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+    function handlePaletteBackdrop(e) {
+      if (e.target.id === 'modal-command-palette') {
+        closeModal('modal-command-palette');
+      }
+    }
+
+    // Keyboard Shortcuts
+    function initKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        // Cmd+P or Ctrl+P for Command Palette
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
+          e.preventDefault();
+          toggleCommandPalette();
+        }
+        // Cmd+S or Ctrl+S for Save
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          alertNotification("Workspace state synced to local disk.");
+        }
+      });
+    }
+
+    // Custom Toast Notification
+    function alertNotification(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-8 right-8 z-50 bg-[#141722] border border-indigo-500/40 text-slate-100 text-xs px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 font-mono';
+      toast.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i> <span>${message}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => toast.remove(), 400);
+      }, 2500);
+    }
+
+    // Extension Mock Installer
+    function installThemeExtension(btn) {
+      btn.textContent = 'Applied';
+      btn.className = 'px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-medium rounded';
+      alertNotification("Retro-Futurism Synthwave Theme applied to UI shaders!");
+    }
+
+    function triggerKryptonNewSpec() {
+      openFile('krypton/SPEC_SOLAR_THEME.md');
+      alertNotification("Initialized Krypton SPEC template editor.");
+    }
+  </script>
+</body>
+</html>
